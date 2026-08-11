@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Software factory model tiers",
+  "type": "object",
+  "required": ["roles", "tiers"],
+  "properties": {
+    "roles": {
+      "type": "object",
+      "required": ["orchestrator", "builder", "reviewer"],
+      "additionalProperties": false,
+      "properties": {
+        "orchestrator": { "type": "string" },
+        "builder": { "type": "string" },
+        "reviewer": { "type": "string" }
+      }
+    },
+    "tiers": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description", "candidates"],
+        "properties": {
+          "description": { "type": "string", "minLength": 1 },
+          "candidates": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[^/]+/.+$" }
+          }
+        }
+      }
+    }
+  }
+}

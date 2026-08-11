@@ -1,0 +1,33 @@
+{
+  "$schema": "./model-tiers.schema.json",
+  "roles": {
+    "orchestrator": "state-of-the-art",
+    "builder": "workhorse",
+    "reviewer": "state-of-the-art"
+  },
+  "tiers": {
+    "state-of-the-art": {
+      "description": "Highest-capability reasoning for planning, orchestration, and independent review.",
+      "candidates": [
+        "openai/gpt-5.6-sol",
+        "github-copilot/gpt-5.6-sol",
+        "github-copilot/claude-opus-5",
+        "github-copilot/claude-opus-4.8",
+        "openai/gpt-5.5",
+        "github-copilot/gpt-5.5"
+      ]
+    },
+    "workhorse": {
+      "description": "Strong coding quality with a better cost and latency balance for implementation.",
+      "candidates": [
+        "openai/gpt-5.6-terra",
+        "github-copilot/gpt-5.6-terra",
+        "github-copilot/claude-sonnet-5",
+        "openai/gpt-5.4",
+        "github-copilot/gpt-5.4",
+        "github-copilot/gpt-5.3-codex",
+        "github-copilot/kimi-k2.7-code"
+      ]
+    }
+  }
+}
