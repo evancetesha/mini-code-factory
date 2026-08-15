@@ -16,7 +16,7 @@ flowchart LR
 
 ## Roles and model tiers
 
-Roles select semantic tiers in `model-tiers.json`; they do not contain model IDs. At startup, `./factory` asks OpenCode for its available catalog and chooses the first available candidate in each tier.
+Roles select semantic tiers in `model-tiers.json`; they do not contain model IDs. At startup, `./factory` asks OpenCode for its available catalog and chooses the first available candidate in each tier. The shipped tiers list candidates across several providers (Anthropic, OpenAI, GitHub Copilot, Google, OpenRouter) so the factory resolves for most people out of the box; you only need to edit `model-tiers.json` if none of a tier's candidates are in your catalog or you prefer a different order.
 
 | Role | Tier | Access |
 |---|---|---|
@@ -29,23 +29,27 @@ Roles select semantic tiers in `model-tiers.json`; they do not contain model IDs
 Edit only `model-tiers.json`:
 
 - Change a value under `roles` to assign a different tier to a role.
-- Reorder a tier's `candidates` to change preference.
+- Reorder a tier's `candidates` to change preference. The launcher uses the first candidate that appears in your catalog.
 - Add or remove candidates using the exact IDs printed by `opencode models`.
-- Run `./factory models` to preview and materialize the resolution.
+- Run `./factory models` to preview and materialize the resolution for your machine.
 
-Current resolution on this machine:
+Resolution depends on which providers you have authenticated in OpenCode, so it differs from machine to machine. Run `./factory models` to see the concrete models chosen for you, for example:
 
-| Tier | Resolved model |
-|---|---|
-| `state-of-the-art` | `openai/gpt-5.6-sol` |
-| `workhorse` | `openai/gpt-5.6-terra` |
+```text
+ROLE          TIER              RESOLVED MODEL
+orchestrator  state-of-the-art  anthropic/claude-opus-4-5
+builder       workhorse         anthropic/claude-sonnet-4-5
+reviewer      state-of-the-art  anthropic/claude-opus-4-5
+```
+
+If a tier cannot resolve (`no available OpenCode model matches tier ...`), add an ID you actually have from `opencode models` to that tier's `candidates`.
 
 Resolved IDs are written under `.factory/runtime/models/` and are gitignored. `opencode.json` reads those transient files; normally you should not edit its model fields.
 
 ## Prerequisites
 
-- Herdr 0.8 or newer
-- OpenCode 1.18 or newer, already authenticated with at least one candidate in each configured tier
+- [Herdr](https://herdr.dev/) 0.8 or newer, for persistent panes and agent lifecycle
+- [OpenCode](https://opencode.ai/) 1.18 or newer, already authenticated with at least one provider (run `opencode auth login`). The shipped tiers cover Anthropic, OpenAI, GitHub Copilot, Google, and OpenRouter, so any one of those is enough to start.
 - Python 3.11 or newer
 - [uv](https://docs.astral.sh/uv/) to run the launcher and development checks
 - The current Herdr OpenCode integration:
@@ -54,7 +58,15 @@ Resolved IDs are written under `.factory/runtime/models/` and are gitignored. `o
 herdr integration install opencode
 ```
 
-No API keys belong in this repository.
+No API keys belong in this repository; OpenCode holds your provider credentials.
+
+Verify everything is wired up before your first real run:
+
+```bash
+./factory check
+```
+
+This validates the prerequisites and prints the concrete model each role resolved to. If it reports that a tier cannot resolve, edit `model-tiers.json` (see [Configure tiers](#configure-tiers)).
 
 ## Start
 
@@ -97,7 +109,7 @@ The orchestrator creates a timestamped directory under `.factory/runs/`, writes 
 Factory-Run: 20260811T120000Z-health-endpoint
 Factory-Role: builder
 Factory-Model-Tier: workhorse
-Factory-Model: openai/gpt-5.6-terra
+Factory-Model: anthropic/claude-sonnet-4-5
 Factory-Agent-Status: done
 Factory-Duration: 1m 18.442s
 Factory-Duration-Ms: 78442
@@ -127,6 +139,14 @@ uv run mypy
 
 Detach from Herdr with `ctrl+b q`; the panes and agents keep running. Run `herdr` again to reattach.
 
+## Troubleshooting
+
+- **`no available OpenCode model matches tier ...`** — none of that tier's candidates are in your catalog. Run `opencode models` to see what you have, then add one of those IDs to the tier in `model-tiers.json` and rerun `./factory models`.
+- **`missing required command: herdr | opencode | uv`** — install the missing tool (see [Prerequisites](#prerequisites)) and make sure it is on your `PATH`.
+- **`Herdr's OpenCode integration is not current`** — run `herdr integration install opencode`.
+- **`the project Herdr skill does not match the installed release`** — your Herdr version ships a different agent skill than the one checked in. Refresh it with `herdr --skill > .opencode/skills/herdr/SKILL.md`.
+- **`start Herdr in this directory, then run ./factory in its shell pane`** — you launched `./factory` outside a Herdr pane. Start `herdr` first, then run `./factory` inside its shell.
+
 ## Layout
 
 ```text
@@ -146,3 +166,7 @@ Detach from Herdr with `ctrl+b q`; the panes and agents keep running. Run `herdr
 ```
 
 The core idea borrowed from Super Simple Software Factory is the clean phase boundary and explicit handoff artifact. This version intentionally leaves deterministic gates and traces for a later iteration; Herdr already provides the agent lifecycle and observable terminal surface needed to test the three-role loop first.
+
+## License
+
+Released under the [MIT License](LICENSE).
