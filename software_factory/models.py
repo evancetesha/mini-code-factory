@@ -75,7 +75,7 @@ def resolved_model_for_role(role: str) -> ResolvedModel:
     try:
         model = path.read_text(encoding="utf-8").strip()
     except OSError as error:
-        raise FactoryError("model tiers are unresolved; run ./factory models") from error
+        raise FactoryError("model tiers are unresolved; run factory models") from error
     if not model:
         raise FactoryError(f"resolved model is empty for role '{role}'")
     return ResolvedModel(role=role, tier=policy.roles[role], model=model)

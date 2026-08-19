@@ -28,6 +28,7 @@
         },
         "bash": {
           "*": "deny",
+          "factory *": "allow",
           "./factory *": "allow",
           "herdr *": "allow"
         },

@@ -16,7 +16,7 @@ flowchart LR
 
 ## Roles and model tiers
 
-Roles select semantic tiers in `model-tiers.json`; they do not contain model IDs. At startup, `./factory` asks OpenCode for its available catalog and chooses the first available candidate in each tier. The shipped tiers list candidates across several providers (Anthropic, OpenAI, GitHub Copilot, Google, OpenRouter) so the factory resolves for most people out of the box; you only need to edit `model-tiers.json` if none of a tier's candidates are in your catalog or you prefer a different order.
+Roles select semantic tiers in `model-tiers.json`; they do not contain model IDs. At startup, `factory` asks OpenCode for its available catalog and chooses the first available candidate in each tier. The shipped tiers list candidates across several providers (Anthropic, OpenAI, GitHub Copilot, Google, OpenRouter) so the factory resolves for most people out of the box; you only need to edit `model-tiers.json` if none of a tier's candidates are in your catalog or you prefer a different order.
 
 | Role | Tier | Access |
 |---|---|---|
@@ -31,9 +31,9 @@ Edit only `model-tiers.json`:
 - Change a value under `roles` to assign a different tier to a role.
 - Reorder a tier's `candidates` to change preference. The launcher uses the first candidate that appears in your catalog.
 - Add or remove candidates using the exact IDs printed by `opencode models`.
-- Run `./factory models` to preview and materialize the resolution for your machine.
+- Run `factory models` to preview and materialize the resolution for your machine.
 
-Resolution depends on which providers you have authenticated in OpenCode, so it differs from machine to machine. Run `./factory models` to see the concrete models chosen for you, for example:
+Resolution depends on which providers you have authenticated in OpenCode, so it differs from machine to machine. Run `factory models` to see the concrete models chosen for you, for example:
 
 ```text
 ROLE          TIER              RESOLVED MODEL
@@ -63,7 +63,7 @@ No API keys belong in this repository; OpenCode holds your provider credentials.
 Verify everything is wired up before your first real run:
 
 ```bash
-./factory check
+factory check
 ```
 
 This validates the prerequisites and prints the concrete model each role resolved to. If it reports that a tier cannot resolve, edit `model-tiers.json` (see [Configure tiers](#configure-tiers)).
@@ -98,7 +98,13 @@ Then, inside its shell pane:
 factory
 ```
 
-Or, from a clone of this repository, use `./factory` instead of `factory`.
+Or, from a clone of this repository, install the package in editable mode so `factory` is also on your `PATH`:
+
+```bash
+uv tool install -e .
+```
+
+`./factory` remains available inside the repository as a development shortcut.
 
 The launcher resolves model tiers, then starts OpenCode directly as the `orchestrator`. Give it a normal request, for example:
 
@@ -106,7 +112,7 @@ The launcher resolves model tiers, then starts OpenCode directly as the `orchest
 Add a health endpoint with focused tests. Do not add dependencies.
 ```
 
-The orchestrator creates a timestamped directory under `.factory/runs/`, writes the request and plan, loads the project-local Herdr skill, and uses Herdr's native agent commands to create the other OpenCode roles. `./factory dispatch` remains as a narrow wrapper around `herdr agent prompt --wait` so model, duration, state, and report telemetry are captured consistently. Run artifacts are local and gitignored.
+The orchestrator creates a timestamped directory under `.factory/runs/`, writes the request and plan, loads the project-local Herdr skill, and uses Herdr's native agent commands to create the other OpenCode roles. `factory dispatch` remains as a narrow wrapper around `herdr agent prompt --wait` so model, duration, state, and report telemetry are captured consistently. Run artifacts are local and gitignored.
 
 ## What v1 does
 
@@ -121,7 +127,7 @@ The orchestrator creates a timestamped directory under `.factory/runs/`, writes 
 
 ## Telemetry
 
-`./factory run new` snapshots the resolved model for every role and starts the total run timer. Each worker dispatch records its elapsed time and Herdr settled state in the run's `telemetry.json`, then prepends headers to the builder or reviewer report:
+`factory run new` snapshots the resolved model for every role and starts the total run timer. Each worker dispatch records its elapsed time and Herdr settled state in the run's `telemetry.json`, then prepends headers to the builder or reviewer report:
 
 ```text
 Factory-Telemetry-Version: 1
@@ -156,8 +162,8 @@ This version does not create branches or worktrees, commit, push, open pull requ
 ## Useful commands
 
 ```bash
-./factory check
-./factory models
+factory check
+factory models
 herdr agent list
 herdr agent read builder --source recent-unwrapped --lines 120
 herdr agent read reviewer --source recent-unwrapped --lines 120
@@ -170,7 +176,7 @@ Detach from Herdr with `ctrl+b q`; the panes and agents keep running. Run `herdr
 
 ## Troubleshooting
 
-- **`no available OpenCode model matches tier ...`** — none of that tier's candidates are in your catalog. Run `opencode models` to see what you have, then add one of those IDs to the tier in `model-tiers.json` and rerun `./factory models`.
+- **`no available OpenCode model matches tier ...`** — none of that tier's candidates are in your catalog. Run `opencode models` to see what you have, then add one of those IDs to the tier in `model-tiers.json` and rerun `factory models`.
 - **`missing required command: herdr | opencode | uv`** — install the missing tool (see [Prerequisites](#prerequisites)) and make sure it is on your `PATH`.
 - **`Herdr's OpenCode integration is not current`** — run `herdr integration install opencode`.
 - **`the project Herdr skill does not match the installed release`** — your Herdr version ships a different agent skill than the one checked in. Refresh it with `herdr --skill > .opencode/skills/herdr/SKILL.md`.
