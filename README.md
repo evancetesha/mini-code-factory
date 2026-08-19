@@ -127,8 +127,8 @@ Before its final response, the orchestrator renders a run-level header with tota
 
 Boundaries come from role prompts, edit-permission rules, and a few bash gates — not a hard sandbox:
 
-- The builder may run arbitrary shell commands (`bash: "*": "allow"`) so it can execute project checks, which means the edit-tool denies do not block shell-based writes to factory files. Guardrails here are the role prompt (change files via the edit tool, never factory machinery) plus `git`/`rm` approval gates.
-- `.env` files are denied for read and edit in all three roles.
+- `.env` files are denied for read and edit in all three roles. This is enforced for the read and edit tools, but the builder and reviewer retain broad shell access (`bash: "*": "allow"`) so they can run project checks; for those roles the `.env` guardrail is prompt-level, and a shell command could still read or write a `.env` file.
+- The builder may run arbitrary shell commands, which means the edit-tool denies on factory files are not a hard boundary. Guardrails here are the role prompt (change files via the edit tool, never factory machinery) plus `git`/`rm` approval gates.
 - All roles deny `webfetch`, `websearch`, `task`, and `external_directory`; only the orchestrator may load the `herdr` skill.
 
 ## Deliberate non-goals

@@ -53,6 +53,14 @@ def test_create_run_handles_same_second_collision(tmp_path: Path) -> None:
     assert second.name == "20260811T083248Z-demo-2"
 
 
+def test_create_run_propagates_when_runs_root_is_a_file(tmp_path: Path) -> None:
+    runs_root = tmp_path / "runs"
+    runs_root.write_text("not a directory", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        create_run("demo", runs_root=runs_root)
+
+
 def test_canonical_prompt_path_stays_within_runs(tmp_path: Path) -> None:
     prompt = tmp_path / "run" / "prompt.md"
     prompt.parent.mkdir()

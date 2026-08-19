@@ -56,6 +56,9 @@
         "skill": "deny",
         "edit": {
           "*": "allow",
+          "*.env": "deny",
+          "*.env.*": "deny",
+          "*.env.example": "allow",
           "factory": "deny",
           "opencode.json": "deny",
           ".opencode/**": "deny",

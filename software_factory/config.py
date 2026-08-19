@@ -54,7 +54,7 @@ def _validate_model_schema(value: dict[str, Any], label: str) -> None:
         raise FactoryError(f"could not load {MODEL_SCHEMA_PATH.name}: {error}") from error
     try:
         jsonschema.validate(instance=value, schema=schema)
-    except jsonschema.ValidationError as error:
+    except (jsonschema.ValidationError, jsonschema.SchemaError) as error:
         raise FactoryError(f"{label} is invalid: {error.message}") from error
 
 
@@ -137,11 +137,12 @@ def create_run(
 ) -> Path:
     timestamp = (now or datetime.now(UTC)).strftime("%Y%m%dT%H%M%SZ")
     base_name = f"{timestamp}-{slugify(label)}"
+    runs_root.mkdir(parents=True, exist_ok=True)
     suffix = 2
     candidate = runs_root / base_name
     while True:
         try:
-            candidate.mkdir(parents=True)
+            candidate.mkdir()
             return candidate
         except FileExistsError:
             candidate = runs_root / f"{base_name}-{suffix}"
