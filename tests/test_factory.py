@@ -145,25 +145,32 @@ def test_opencode_agent_permissions_harden_factory_boundaries() -> None:
 
     builder_edit = agents["builder"]["permission"]["edit"]
     for pattern in (
-        ".git/**",
-        "factory",
-        "opencode.json",
-        ".opencode/**",
-        ".factory/prompts/**",
-        ".factory/runtime/**",
-        ".factory/runs/**/telemetry.json",
-        ".factory/runs/**/request.md",
-        ".factory/runs/**/plan.md",
-        ".factory/runs/**/review*.md",
-        ".factory/runs/**/*-prompt.md",
-        ".factory/runs/**/revision*.md",
-        "software_factory/**",
-        "pyproject.toml",
-        "uv.lock",
-        "model-tiers.json",
-        "model-tiers.schema.json",
+        "*.git/**",
+        "*factory",
+        "*opencode.json",
+        "*.opencode/**",
+        "*.factory/prompts/**",
+        "*.factory/runtime/**",
+        "*.factory/runs/**/telemetry.json",
+        "*.factory/runs/**/request.md",
+        "*.factory/runs/**/plan.md",
+        "*.factory/runs/**/review*.md",
+        "*.factory/runs/**/*-prompt.md",
+        "*.factory/runs/**/revision*.md",
+        "*software_factory/**",
+        "*pyproject.toml",
+        "*uv.lock",
+        "*model-tiers.json",
+        "*model-tiers.schema.json",
     ):
         assert builder_edit.get(pattern) == "deny", f"builder edit must deny {pattern}"
+
+    orchestrator_edit = agents["orchestrator"]["permission"]["edit"]
+    assert orchestrator_edit["*.factory/runs/**"] == "allow"
+    assert orchestrator_edit["*.factory/runs/**/telemetry.json"] == "deny"
+
+    reviewer_edit = agents["reviewer"]["permission"]["edit"]
+    assert reviewer_edit["*.factory/runs/**/review*.md"] == "allow"
 
     builder_bash = agents["builder"]["permission"]["bash"]
     for command in (

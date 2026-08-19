@@ -23,8 +23,8 @@
         },
         "edit": {
           "*": "deny",
-          ".factory/runs/**": "allow",
-          ".factory/runs/**/telemetry.json": "deny"
+          "*.factory/runs/**": "allow",
+          "*.factory/runs/**/telemetry.json": "deny"
         },
         "bash": {
           "*": "deny",
@@ -60,23 +60,23 @@
           "*.env": "deny",
           "*.env.*": "deny",
           "*.env.example": "allow",
-          "factory": "deny",
-          "opencode.json": "deny",
-          ".git/**": "deny",
-          ".opencode/**": "deny",
-          ".factory/prompts/**": "deny",
-          ".factory/runtime/**": "deny",
-          ".factory/runs/**/telemetry.json": "deny",
-          ".factory/runs/**/request.md": "deny",
-          ".factory/runs/**/plan.md": "deny",
-          ".factory/runs/**/review*.md": "deny",
-          ".factory/runs/**/*-prompt.md": "deny",
-          ".factory/runs/**/revision*.md": "deny",
-          "software_factory/**": "deny",
-          "pyproject.toml": "deny",
-          "uv.lock": "deny",
-          "model-tiers.json": "deny",
-          "model-tiers.schema.json": "deny"
+          "*factory": "deny",
+          "*opencode.json": "deny",
+          "*.git/**": "deny",
+          "*.opencode/**": "deny",
+          "*.factory/prompts/**": "deny",
+          "*.factory/runtime/**": "deny",
+          "*.factory/runs/**/telemetry.json": "deny",
+          "*.factory/runs/**/request.md": "deny",
+          "*.factory/runs/**/plan.md": "deny",
+          "*.factory/runs/**/review*.md": "deny",
+          "*.factory/runs/**/*-prompt.md": "deny",
+          "*.factory/runs/**/revision*.md": "deny",
+          "*software_factory/**": "deny",
+          "*pyproject.toml": "deny",
+          "*uv.lock": "deny",
+          "*model-tiers.json": "deny",
+          "*model-tiers.schema.json": "deny"
         },
         "bash": {
           "*": "allow",
@@ -121,7 +121,7 @@
         "skill": "deny",
         "edit": {
           "*": "deny",
-          ".factory/runs/**/review*.md": "allow"
+          "*.factory/runs/**/review*.md": "allow"
         },
         "bash": {
           "*": "allow",
