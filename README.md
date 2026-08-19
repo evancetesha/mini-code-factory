@@ -106,6 +106,7 @@ The orchestrator creates a timestamped directory under `.factory/runs/`, writes 
 `./factory run new` snapshots the resolved model for every role and starts the total run timer. Each worker dispatch records its elapsed time and Herdr settled state in the run's `telemetry.json`, then prepends headers to the builder or reviewer report:
 
 ```text
+Factory-Telemetry-Version: 1
 Factory-Run: 20260811T120000Z-health-endpoint
 Factory-Role: builder
 Factory-Model-Tier: workhorse
@@ -116,9 +117,19 @@ Factory-Duration-Ms: 78442
 Factory-Started-At: 2026-08-11T12:00:03.120Z
 Factory-Finished-At: 2026-08-11T12:01:21.562Z
 Factory-Herdr-Pane: w1:p2
+Factory-Prompt: .factory/runs/20260811T120000Z-health-endpoint/build-prompt.md
+Factory-Report: .factory/runs/20260811T120000Z-health-endpoint/build-report.md
 ```
 
 Before its final response, the orchestrator renders a run-level header with total elapsed time, verdict, dispatch counts, factory/Herdr/OpenCode versions, and all three resolved models. Herdr 0.8's dispatch result does not expose model token counts or cost, so the factory deliberately does not invent those figures.
+
+## Security model
+
+Boundaries come from role prompts, edit-permission rules, and a few bash gates — not a hard sandbox:
+
+- The builder may run arbitrary shell commands (`bash: "*": "allow"`) so it can execute project checks, which means the edit-tool denies do not block shell-based writes to factory files. Guardrails here are the role prompt (change files via the edit tool, never factory machinery) plus `git`/`rm` approval gates.
+- `.env` files are denied for read and edit in all three roles.
+- All roles deny `webfetch`, `websearch`, `task`, and `external_directory`; only the orchestrator may load the `herdr` skill.
 
 ## Deliberate non-goals
 

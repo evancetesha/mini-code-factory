@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from software_factory.cli import app
 from software_factory.config import (
+    FactoryError,
     ModelPolicy,
     Tier,
     canonical_prompt_path,
@@ -15,7 +18,7 @@ from software_factory.config import (
     load_model_policy,
     slugify,
 )
-from software_factory.models import ResolvedModel, resolve_policy
+from software_factory.models import ResolvedModel, parse_model_catalog, resolve_policy
 from software_factory.telemetry import (
     DispatchTelemetry,
     RunTelemetry,
@@ -74,6 +77,46 @@ def test_model_policy_uses_two_tiers() -> None:
         "reviewer": "state-of-the-art",
     }
     assert set(policy.tiers) == {"state-of-the-art", "workhorse"}
+
+
+def test_model_policy_rejects_schema_violations(tmp_path: Path) -> None:
+    policy_path = tmp_path / "model-tiers.json"
+    policy_path.write_text(
+        json.dumps(
+            {
+                "roles": {
+                    "orchestrator": "workhorse",
+                    "builder": "workhorse",
+                    "reviewer": "workhorse",
+                },
+                "tiers": {
+                    "workhorse": {
+                        "description": "balanced",
+                        "candidates": ["provider/a", "provider/a"],
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FactoryError):
+        load_model_policy(policy_path)
+
+
+def test_parse_model_catalog_extracts_provider_model_ids() -> None:
+    output = (
+        "anthropic/claude-opus-4-5  (available)\n"
+        "openai/gpt-5.2\n"
+        "no-slash-here\n"
+        "google/gemini-2.5-pro default\n"
+    )
+
+    assert parse_model_catalog(output) == {
+        "anthropic/claude-opus-4-5",
+        "openai/gpt-5.2",
+        "google/gemini-2.5-pro",
+    }
 
 
 def test_resolver_uses_first_available_candidate() -> None:
