@@ -11,7 +11,17 @@ from typing import Any
 
 import jsonschema
 
-FACTORY_ROOT = Path(__file__).resolve().parent.parent
+ASSETS_ROOT = Path(__file__).resolve().parent / "assets"
+
+
+def _resolve_factory_root() -> Path:
+    override = os.environ.get("FACTORY_DIR")
+    if override:
+        return Path(override).expanduser().resolve()
+    return Path.cwd().resolve()
+
+
+FACTORY_ROOT = _resolve_factory_root()
 RUNS_ROOT = FACTORY_ROOT / ".factory" / "runs"
 MODEL_POLICY_PATH = FACTORY_ROOT / "model-tiers.json"
 MODEL_SCHEMA_PATH = FACTORY_ROOT / "model-tiers.schema.json"
@@ -19,6 +29,16 @@ MODEL_RUNTIME_ROOT = FACTORY_ROOT / ".factory" / "runtime" / "models"
 OPENCODE_CONFIG_PATH = FACTORY_ROOT / "opencode.json"
 HERDR_SKILL_PATH = FACTORY_ROOT / ".opencode" / "skills" / "herdr" / "SKILL.md"
 ROLES = ("orchestrator", "builder", "reviewer")
+
+FACTORY_ASSETS: tuple[tuple[str, str], ...] = (
+    ("opencode.json", "opencode.json"),
+    ("model-tiers.json", "model-tiers.json"),
+    ("model-tiers.schema.json", "model-tiers.schema.json"),
+    ("factory/prompts/orchestrator.md", ".factory/prompts/orchestrator.md"),
+    ("factory/prompts/builder.md", ".factory/prompts/builder.md"),
+    ("factory/prompts/reviewer.md", ".factory/prompts/reviewer.md"),
+    ("opencode/skills/herdr/SKILL.md", ".opencode/skills/herdr/SKILL.md"),
+)
 
 
 class FactoryError(RuntimeError):
@@ -108,9 +128,25 @@ def require_commands(*commands: str) -> None:
             raise FactoryError(f"missing required command: {command}")
 
 
+def materialize_factory(root: Path, assets_root: Path = ASSETS_ROOT) -> list[Path]:
+    """Copy missing factory assets into ``root`` and return the created files."""
+    created: list[Path] = []
+    for source_rel, target_rel in FACTORY_ASSETS:
+        target = root / target_rel
+        if target.exists():
+            continue
+        source = assets_root / source_rel
+        if not source.is_file():
+            raise FactoryError(f"missing packaged asset: {source_rel}")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+        created.append(target)
+    return created
+
+
 def require_herdr_context() -> None:
     if os.environ.get("HERDR_ENV") != "1" or not os.environ.get("HERDR_PANE_ID"):
-        raise FactoryError("start Herdr in this directory, then run ./factory in its shell pane")
+        raise FactoryError("start Herdr in this directory, then run factory in its shell pane")
 
 
 def prompt_timeout_ms() -> int:

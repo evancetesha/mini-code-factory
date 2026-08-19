@@ -14,6 +14,9 @@ dependencies = [
     "typer>=0.21,<1",
 ]
 
+[project.scripts]
+factory = "software_factory.cli:main"
+
 [dependency-groups]
 dev = [
     "mypy>=1.17,<2",
@@ -29,6 +32,13 @@ testpaths = ["tests"]
 
 [tool.setuptools.dynamic]
 version = { attr = "software_factory.__version__" }
+
+[tool.setuptools.package-data]
+software_factory = [
+    "assets/*.json",
+    "assets/factory/prompts/*.md",
+    "assets/opencode/skills/herdr/*.md",
+]
 
 [tool.ruff]
 include = ["factory", "software_factory/**/*.py", "tests/**/*.py"]

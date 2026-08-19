@@ -14,6 +14,7 @@ from software_factory.config import (
     canonical_run_directory,
     create_run,
     load_model_policy,
+    materialize_factory,
     require_commands,
     require_herdr_context,
     validate_opencode_config,
@@ -52,6 +53,7 @@ app.add_typer(run_app, name="run")
 
 
 def _check_prerequisites() -> None:
+    materialize_factory(FACTORY_ROOT)
     require_commands("herdr", "opencode", "uv")
     validate_opencode_config()
     load_model_policy()
@@ -105,6 +107,17 @@ def resolve_models() -> None:
     """Resolve configured tiers against the available OpenCode catalog."""
     _check_prerequisites()
     _resolve_models_and_print()
+
+
+@app.command("init")
+def init_factory() -> None:
+    """Materialize the factory configuration into the current directory."""
+    created = materialize_factory(FACTORY_ROOT)
+    if created:
+        for path in created:
+            typer.echo(str(path.relative_to(FACTORY_ROOT)))
+    else:
+        typer.echo("factory: already initialized")
 
 
 @run_app.command("new")

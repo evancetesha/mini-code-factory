@@ -68,9 +68,25 @@ Verify everything is wired up before your first real run:
 
 This validates the prerequisites and prints the concrete model each role resolved to. If it reports that a tier cannot resolve, edit `model-tiers.json` (see [Configure tiers](#configure-tiers)).
 
+## Install
+
+You do not need to clone this repository. Install the `factory` command and run it inside your own project:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/evancetesha/mini-code-factory/main/install.sh | sh
+```
+
+`install.sh` installs the package with `uv tool` (or `pipx`) from the repository and puts `factory` on your `PATH`. Alternatively, install manually:
+
+```bash
+uv tool install --force git+https://github.com/evancetesha/mini-code-factory.git
+```
+
+On first run, `factory` materializes its configuration into the current directory — `opencode.json`, `model-tiers.json`, `model-tiers.schema.json`, `.factory/prompts/`, and `.opencode/skills/herdr/`. Existing files are never overwritten; run `factory init` to materialize explicitly. Add `.factory/` to your `.gitignore` if you do not want run artifacts committed.
+
 ## Start
 
-From this repository:
+Installed, from your project directory:
 
 ```bash
 herdr
@@ -79,8 +95,10 @@ herdr
 Then, inside its shell pane:
 
 ```bash
-./factory
+factory
 ```
+
+Or, from a clone of this repository, use `./factory` instead of `factory`.
 
 The launcher resolves model tiers, then starts OpenCode directly as the `orchestrator`. Give it a normal request, for example:
 
@@ -156,18 +174,20 @@ Detach from Herdr with `ctrl+b q`; the panes and agents keep running. Run `herdr
 - **`missing required command: herdr | opencode | uv`** — install the missing tool (see [Prerequisites](#prerequisites)) and make sure it is on your `PATH`.
 - **`Herdr's OpenCode integration is not current`** — run `herdr integration install opencode`.
 - **`the project Herdr skill does not match the installed release`** — your Herdr version ships a different agent skill than the one checked in. Refresh it with `herdr --skill > .opencode/skills/herdr/SKILL.md`.
-- **`start Herdr in this directory, then run ./factory in its shell pane`** — you launched `./factory` outside a Herdr pane. Start `herdr` first, then run `./factory` inside its shell.
+- **`start Herdr in this directory, then run factory in its shell pane`** — you launched `factory` outside a Herdr pane. Start `herdr` first, then run `factory` inside its shell.
 
 ## Layout
 
 ```text
 .
-├── factory                         # 10-line executable Python entrypoint
+├── factory                         # 10-line executable Python entrypoint (dev)
+├── install.sh                      # installs the `factory` command without cloning
 ├── model-tiers.json                # editable role tiers and ordered candidates
 ├── model-tiers.schema.json         # tier configuration schema
 ├── opencode.json                   # roles, resolved model references, permissions
-├── pyproject.toml                  # Typer and development dependencies
+├── pyproject.toml                  # packaging, console script, and dev dependencies
 ├── software_factory/               # typed CLI, dispatch telemetry, and model tiers
+│   └── assets/                     # packaged factory files materialized on first run
 ├── .opencode/skills/herdr/SKILL.md # release-matched Herdr agent skill
 ├── .factory/
 │   ├── prompts/                    # SDLC contracts for the three roles

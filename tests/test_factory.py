@@ -9,6 +9,8 @@ from typer.testing import CliRunner
 
 from software_factory.cli import app
 from software_factory.config import (
+    ASSETS_ROOT,
+    FACTORY_ASSETS,
     FactoryError,
     ModelPolicy,
     Tier,
@@ -16,6 +18,7 @@ from software_factory.config import (
     canonical_report_target,
     create_run,
     load_model_policy,
+    materialize_factory,
     slugify,
 )
 from software_factory.models import ResolvedModel, parse_model_catalog, resolve_policy
@@ -125,6 +128,35 @@ def test_parse_model_catalog_extracts_provider_model_ids() -> None:
         "openai/gpt-5.2",
         "google/gemini-2.5-pro",
     }
+
+
+def test_packaged_assets_match_repository_files() -> None:
+    repo_root = Path(__file__).resolve().parent.parent
+
+    for source_rel, target_rel in FACTORY_ASSETS:
+        assert (ASSETS_ROOT / source_rel).read_text(encoding="utf-8") == (
+            repo_root / target_rel
+        ).read_text(encoding="utf-8")
+
+
+def test_materialize_factory_copies_missing_assets_only(tmp_path: Path) -> None:
+    created = materialize_factory(tmp_path)
+
+    assert (tmp_path / "opencode.json").is_file()
+    assert (tmp_path / "model-tiers.json").is_file()
+    assert (tmp_path / ".factory" / "prompts" / "builder.md").is_file()
+    assert (tmp_path / ".opencode" / "skills" / "herdr" / "SKILL.md").is_file()
+    assert {path.relative_to(tmp_path) for path in created} == {
+        Path("opencode.json"),
+        Path("model-tiers.json"),
+        Path("model-tiers.schema.json"),
+        Path(".factory/prompts/orchestrator.md"),
+        Path(".factory/prompts/builder.md"),
+        Path(".factory/prompts/reviewer.md"),
+        Path(".opencode/skills/herdr/SKILL.md"),
+    }
+
+    assert materialize_factory(tmp_path) == []
 
 
 def test_resolver_uses_first_available_candidate() -> None:
