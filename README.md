@@ -1,4 +1,4 @@
-# Minimal Software Factory
+# Minimal Software Factory - Experiment
 
 A deliberately small SDLC factory using [OpenCode](https://opencode.ai/) for the agents and [Herdr](https://herdr.dev/) for persistent panes, agent state, and handoffs.
 
