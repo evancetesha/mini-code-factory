@@ -21,9 +21,18 @@ class ResolvedModel:
     model: str
 
 
+def parse_model_catalog(output: str) -> set[str]:
+    models: set[str] = set()
+    for line in output.splitlines():
+        for token in line.split():
+            if "/" in token:
+                models.add(token)
+    return models
+
+
 def available_models() -> set[str]:
     completed = run_command(["opencode", "models"], cwd=FACTORY_ROOT.parent)
-    return {line.strip() for line in completed.stdout.splitlines() if "/" in line}
+    return parse_model_catalog(completed.stdout)
 
 
 def resolve_policy(policy: ModelPolicy, catalog: set[str]) -> list[ResolvedModel]:

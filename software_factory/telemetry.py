@@ -1,19 +1,21 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
+from software_factory import __version__ as FACTORY_VERSION
 from software_factory.config import ROLES, FactoryError
 from software_factory.models import ResolvedModel, resolved_model_for_role
 from software_factory.process import run_command
 
 TELEMETRY_VERSION = 1
 TELEMETRY_FILENAME = "telemetry.json"
-FACTORY_VERSION = "0.1.0"
 
 
 @dataclass(frozen=True)
@@ -143,23 +145,40 @@ def load_run_telemetry(run_directory: Path) -> RunTelemetry:
     return RunTelemetry.from_json(raw)
 
 
+@contextlib.contextmanager
+def _exclusive_lock(lock_path: Path) -> Iterator[None]:
+    try:
+        import fcntl
+    except ImportError:
+        yield
+        return
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def record_dispatch(run_directory: Path, dispatch: DispatchTelemetry) -> None:
     path = run_directory / TELEMETRY_FILENAME
-    telemetry = (
-        load_run_telemetry(run_directory)
-        if path.exists()
-        else initialize_run_telemetry(run_directory)
-    )
-    updated = RunTelemetry(
-        run=telemetry.run,
-        started_at=telemetry.started_at,
-        factory_version=telemetry.factory_version,
-        herdr_version=telemetry.herdr_version,
-        opencode_version=telemetry.opencode_version,
-        models=telemetry.models,
-        dispatches=(*telemetry.dispatches, dispatch),
-    )
-    _write_run_telemetry(run_directory, updated)
+    with _exclusive_lock(path.with_suffix(".lock")):
+        telemetry = (
+            load_run_telemetry(run_directory)
+            if path.exists()
+            else initialize_run_telemetry(run_directory)
+        )
+        updated = RunTelemetry(
+            run=telemetry.run,
+            started_at=telemetry.started_at,
+            factory_version=telemetry.factory_version,
+            herdr_version=telemetry.herdr_version,
+            opencode_version=telemetry.opencode_version,
+            models=telemetry.models,
+            dispatches=(*telemetry.dispatches, dispatch),
+        )
+        _write_run_telemetry(run_directory, updated)
 
 
 def format_dispatch_headers(dispatch: DispatchTelemetry) -> str:
@@ -222,9 +241,12 @@ def format_run_headers(
 def prepend_report_headers(report: Path, dispatch: DispatchTelemetry) -> None:
     if report.is_symlink() or not report.is_file():
         raise FactoryError(f"worker did not create a regular report file: {report}")
+    temporary = report.with_suffix(".tmp")
     try:
         body = report.read_text(encoding="utf-8")
-        report.write_text(f"{format_dispatch_headers(dispatch)}\n\n---\n\n{body}", encoding="utf-8")
+        content = f"{format_dispatch_headers(dispatch)}\n\n---\n\n{body}"
+        temporary.write_text(content, encoding="utf-8")
+        os.replace(temporary, report)
     except OSError as error:
         raise FactoryError(f"could not add telemetry headers to {report}") from error
 
@@ -272,7 +294,7 @@ def _string(raw: dict[str, object], key: str) -> str:
 
 def _integer(raw: dict[str, object], key: str) -> int:
     value = raw.get(key)
-    if not isinstance(value, int):
+    if isinstance(value, bool) or not isinstance(value, int):
         raise FactoryError(f"telemetry field '{key}' must be an integer")
     return value
 

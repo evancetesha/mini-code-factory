@@ -9,9 +9,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import jsonschema
+
 FACTORY_ROOT = Path(__file__).resolve().parent.parent
 RUNS_ROOT = FACTORY_ROOT / ".factory" / "runs"
 MODEL_POLICY_PATH = FACTORY_ROOT / "model-tiers.json"
+MODEL_SCHEMA_PATH = FACTORY_ROOT / "model-tiers.schema.json"
 MODEL_RUNTIME_ROOT = FACTORY_ROOT / ".factory" / "runtime" / "models"
 OPENCODE_CONFIG_PATH = FACTORY_ROOT / "opencode.json"
 HERDR_SKILL_PATH = FACTORY_ROOT / ".opencode" / "skills" / "herdr" / "SKILL.md"
@@ -44,8 +47,20 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _validate_model_schema(value: dict[str, Any], label: str) -> None:
+    try:
+        schema = _load_json(MODEL_SCHEMA_PATH)
+    except FactoryError as error:
+        raise FactoryError(f"could not load {MODEL_SCHEMA_PATH.name}: {error}") from error
+    try:
+        jsonschema.validate(instance=value, schema=schema)
+    except (jsonschema.ValidationError, jsonschema.SchemaError) as error:
+        raise FactoryError(f"{label} is invalid: {error.message}") from error
+
+
 def load_model_policy(path: Path = MODEL_POLICY_PATH) -> ModelPolicy:
     raw = _load_json(path)
+    _validate_model_schema(raw, path.name)
     raw_roles = raw.get("roles")
     raw_tiers = raw.get("tiers")
     if not isinstance(raw_roles, dict) or set(raw_roles) != set(ROLES):
@@ -122,13 +137,16 @@ def create_run(
 ) -> Path:
     timestamp = (now or datetime.now(UTC)).strftime("%Y%m%dT%H%M%SZ")
     base_name = f"{timestamp}-{slugify(label)}"
-    candidate = runs_root / base_name
+    runs_root.mkdir(parents=True, exist_ok=True)
     suffix = 2
-    while candidate.exists():
-        candidate = runs_root / f"{base_name}-{suffix}"
-        suffix += 1
-    candidate.mkdir(parents=True)
-    return candidate
+    candidate = runs_root / base_name
+    while True:
+        try:
+            candidate.mkdir()
+            return candidate
+        except FileExistsError:
+            candidate = runs_root / f"{base_name}-{suffix}"
+            suffix += 1
 
 
 def canonical_prompt_path(supplied: Path, runs_root: Path = RUNS_ROOT) -> Path:

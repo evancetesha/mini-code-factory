@@ -12,10 +12,7 @@
           "*": "allow",
           "*.env": "deny",
           "*.env.*": "deny",
-          "*.env.example": "allow",
-          "**/.env": "deny",
-          "**/.env.*": "deny",
-          "**/.env.example": "allow"
+          "*.env.example": "allow"
         },
         "glob": "allow",
         "grep": "allow",
@@ -27,9 +24,7 @@
         "edit": {
           "*": "deny",
           ".factory/runs/**": "allow",
-          "**/.factory/runs/**": "allow",
-          ".factory/runs/**/telemetry.json": "deny",
-          "**/.factory/runs/**/telemetry.json": "deny"
+          ".factory/runs/**/telemetry.json": "deny"
         },
         "bash": {
           "*": "deny",
@@ -53,10 +48,7 @@
           "*": "allow",
           "*.env": "deny",
           "*.env.*": "deny",
-          "*.env.example": "allow",
-          "**/.env": "deny",
-          "**/.env.*": "deny",
-          "**/.env.example": "allow"
+          "*.env.example": "allow"
         },
         "glob": "allow",
         "grep": "allow",
@@ -64,6 +56,9 @@
         "skill": "deny",
         "edit": {
           "*": "allow",
+          "*.env": "deny",
+          "*.env.*": "deny",
+          "*.env.example": "allow",
           "factory": "deny",
           "opencode.json": "deny",
           ".opencode/**": "deny",
@@ -76,20 +71,7 @@
           "pyproject.toml": "deny",
           "uv.lock": "deny",
           "model-tiers.json": "deny",
-          "model-tiers.schema.json": "deny",
-          "**/factory": "deny",
-          "**/opencode.json": "deny",
-          "**/.opencode/**": "deny",
-          "**/.factory/prompts/**": "deny",
-          "**/.factory/runs/**/telemetry.json": "deny",
-          "**/.factory/runs/**/request.md": "deny",
-          "**/.factory/runs/**/plan.md": "deny",
-          "**/.factory/runs/**/review*.md": "deny",
-          "**/software_factory/**": "deny",
-          "**/pyproject.toml": "deny",
-          "**/uv.lock": "deny",
-          "**/model-tiers.json": "deny",
-          "**/model-tiers.schema.json": "deny"
+          "model-tiers.schema.json": "deny"
         },
         "bash": {
           "*": "allow",
@@ -123,10 +105,7 @@
           "*": "allow",
           "*.env": "deny",
           "*.env.*": "deny",
-          "*.env.example": "allow",
-          "**/.env": "deny",
-          "**/.env.*": "deny",
-          "**/.env.example": "allow"
+          "*.env.example": "allow"
         },
         "glob": "allow",
         "grep": "allow",
@@ -134,8 +113,7 @@
         "skill": "deny",
         "edit": {
           "*": "deny",
-          ".factory/runs/**/review*.md": "allow",
-          "**/.factory/runs/**/review*.md": "allow"
+          ".factory/runs/**/review*.md": "allow"
         },
         "bash": {
           "*": "allow",
