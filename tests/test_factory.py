@@ -139,6 +139,54 @@ def test_packaged_assets_match_repository_files() -> None:
         ).read_text(encoding="utf-8")
 
 
+def test_opencode_agent_permissions_harden_factory_boundaries() -> None:
+    config_path = Path(__file__).resolve().parent.parent / "opencode.json"
+    agents = json.loads(config_path.read_text(encoding="utf-8"))["agent"]
+
+    builder_edit = agents["builder"]["permission"]["edit"]
+    for pattern in (
+        ".git/**",
+        "factory",
+        "opencode.json",
+        ".opencode/**",
+        ".factory/prompts/**",
+        ".factory/runtime/**",
+        ".factory/runs/**/telemetry.json",
+        ".factory/runs/**/request.md",
+        ".factory/runs/**/plan.md",
+        ".factory/runs/**/review*.md",
+        ".factory/runs/**/*-prompt.md",
+        ".factory/runs/**/revision*.md",
+        "software_factory/**",
+        "pyproject.toml",
+        "uv.lock",
+        "model-tiers.json",
+        "model-tiers.schema.json",
+    ):
+        assert builder_edit.get(pattern) == "deny", f"builder edit must deny {pattern}"
+
+    builder_bash = agents["builder"]["permission"]["bash"]
+    for command in (
+        "git clean*",
+        "git commit*",
+        "git push*",
+        "git reset*",
+        "git merge*",
+        "git rebase*",
+        "git branch*",
+    ):
+        assert builder_bash.get(command) == "deny", f"builder bash must deny {command}"
+
+    reviewer_bash = agents["reviewer"]["permission"]["bash"]
+    assert reviewer_bash["rm *"] == "deny"
+    assert reviewer_bash["git *"] == "deny"
+    assert reviewer_bash["git status*"] == "allow"
+
+    orchestrator_bash = agents["orchestrator"]["permission"]["bash"]
+    assert orchestrator_bash["factory *"] == "allow"
+    assert orchestrator_bash["./factory *"] == "allow"
+
+
 def test_materialize_factory_copies_missing_assets_only(tmp_path: Path) -> None:
     created = materialize_factory(tmp_path)
 
